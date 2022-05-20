@@ -38,8 +38,8 @@ class JsonReader:
                             break
                 for gigahuts in self.ego_pose_read:
                     if gigahuts['token'] == huts['ego_pose_token']:
-                        print(gigahuts['translation'])
-                        print(gigahuts['rotation'])
+                        #print(gigahuts['translation'])
+                        #print(gigahuts['rotation'])
                         return gigahuts['translation'], gigahuts['rotation']
 
     def get_scene(self, index: int, file_locations):
