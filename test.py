@@ -8,12 +8,12 @@ def main():
     # reglib.load_library(os.path.join(os.curdir, "cmake-build-debug"))
 
     # Load you data
-    source_points = reglib.load_data(os.path.join(os.curdir, "files", "single.ply"))
+    source_points = reglib.load_data(os.path.join(os.curdir, "files", "part.ply"))
     target_points = reglib.load_data(os.path.join(os.curdir, "files", "full.ply"))
 
     # Run the registration algorithm
     start = time.time()
-    trans = reglib.icp(source=source_points, target=target_points, nr_iterations=10, epsilon=0.01,
+    trans = reglib.ndt(source=source_points, target=target_points, nr_iterations=10, epsilon=0.01,
                        inlier_threshold=0.05, distance_threshold=5.0, downsample=0, visualize=True)
                        #resolution=12.0, step_size=0.5, voxelize=0)
     print("Runtime:", time.time() - start)
