@@ -29,7 +29,7 @@ start, end = json.get_scene(2, list_of_lidar)
 print(f"Start {start} and end {end}")
 print(f"DatasetSize: {data_nu_scenes.get_dataset_size()}")
 full_cloud = None
-for f in range(start, end):
+for f in range(50, 51):
     o3d_pcd_lidar = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(data_nu_scenes.get_lidar(f, max_lidar_points)))
     translation, rotation = json.get_translation(data_nu_scenes.get_lidar_path(f))
     if initial_translation == 0:
@@ -54,5 +54,5 @@ for f in range(start, end):
     o3d_pcd_radar_comb = o3d.geometry.PointCloud(data_nu_scenes.get_radar(f, max_radar_points)).paint_uniform_color(
         [0, 0, 0])
 visualize_with_viewpoint(full_cloud)
-o3d.io.write_point_cloud("files/full.ply", full_cloud)
+o3d.io.write_point_cloud("files/part.ply", full_cloud)
 gigahuts = 100

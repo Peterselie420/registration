@@ -13,7 +13,7 @@ def main():
 
     # Run the registration algorithm
     start = time.time()
-    trans = reglib.ndt(source=source_points, target=target_points, nr_iterations=10, epsilon=0.01,
+    trans = reglib.ndt(source=source_points, target=target_points, nr_iterations=100, epsilon=0.01,
                        inlier_threshold=0.05, distance_threshold=5.0, downsample=0, visualize=True)
                        #resolution=12.0, step_size=0.5, voxelize=0)
     print("Runtime:", time.time() - start)
