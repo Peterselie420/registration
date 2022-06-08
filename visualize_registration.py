@@ -1,12 +1,12 @@
 import copy
-import os
 import time
-
 import numpy as np
-
-import data_utils
+import data_nu_scenes
+import json_reader
+import pcd_render_utils
 import reglib
 import open3d as o3d
+from numpy.random import randint
 
 source = "/home/carpc/PycharmProjects/PythonRegistration/registration/files/part.ply"
 target = "/home/carpc/PycharmProjects/PythonRegistration/registration/files/full.ply"
@@ -24,7 +24,7 @@ def get_transformation_matrix(source: str = offset, target: str = target):
 
     # Run the registration algorithm
     start = time.time()
-    trans = reglib.icp(source=source_points, target=target_points, nr_iterations=10, epsilon=0.5,
+    trans = reglib.ndt(source=source_points, target=target_points, nr_iterations=5000, epsilon=0.5,
                        inlier_threshold=0.005, distance_threshold=5.0, downsample=0, visualize=False)
     # resolution=12.0, step_size=0.5, voxelize=0)
     print("Runtime:", time.time() - start)
@@ -43,18 +43,6 @@ def visualize_pcd(clouds):
     vis.destroy_window()
 
 
-def plot_clouds(source: str, target: str, trans=None):
-    if trans is None:
-        source_cloud = o3d.io.read_point_cloud(source).paint_uniform_color([0, 0, 0])
-        target_cloud = o3d.io.read_point_cloud(target)
-        visualize_pcd([source_cloud, target_cloud])
-    else:
-        source_cloud = o3d.io.read_point_cloud(source)
-        huts = source_cloud.transform(trans)
-        huts.paint_uniform_color([1, 0, 0])
-        visualize_pcd(huts)
-
-
 def generate_random_transformation_offset():
     T = np.random.random([4, 4]) / 1000
     T[0][0], T[1][1], T[2][2] = 1, 1, 1
@@ -65,6 +53,24 @@ def generate_random_transformation_offset():
     return T
 
 
+def render_clouds(json: json_reader.JsonReader, data_nu_scenes: data_nu_scenes.DataNuScenes, scene: int):
+    lidar = False
+    list_of_lidar = data_nu_scenes.list_of_files_lidar
+    start, end = json.get_scene(scene, list_of_lidar)
+    pcd_lidar = pcd_render_utils.construct_cloud(json, data_nu_scenes, start, end, lidar=True)
+    o3d.io.write_point_cloud(target, pcd_lidar, write_ascii=True)
+    single_scene = randint(start, end)
+    pcd_lidar_part = pcd_render_utils.construct_cloud(json, data_nu_scenes, single_scene, single_scene + 1, lidar=lidar)
+    o3d.io.write_point_cloud(source, pcd_lidar_part, write_ascii=True)
+
+
+re_render_clouds = True  # Will re-render clouds, takes some minutes
+scene = 3  # Scene to render
+# Render clouds if necessary
+if re_render_clouds:
+    data_nu_scenes = data_nu_scenes.DataNuScenes()
+    json = json_reader.JsonReader()
+    render_clouds(json, data_nu_scenes, scene)
 # Get transformation matrix to offset part cloud
 T_off = generate_random_transformation_offset()
 # Offset part cloud and save to ply format

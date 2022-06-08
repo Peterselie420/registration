@@ -2,6 +2,7 @@ import os
 
 import data_utils
 import utils
+from json_reader import JsonReader
 
 
 class DataNuScenes:
@@ -49,15 +50,15 @@ class DataNuScenes:
     def get_lidar(self, idx: int, max_points: int = 0, square=False):
         return data_utils.get_lidar_cloud(self.list_of_files_lidar[idx], max_points, square)
 
-    def get_num_of_radar_points(self, idx: int):
-        return self.get_radar(idx, points=True)
+    def get_num_of_radar_points(self, idx: int, json_reader: JsonReader):
+        return self.get_radar(idx, json_reader=json_reader, points=True)
 
-    def get_radar(self, idx: int, max_points: int = 0, square=False, points: bool = False):
+    def get_radar(self, idx: int, json_reader: JsonReader, points: bool = False, test: bool = False):
         cloud, num_points = data_utils.get_radar_cloud(self.list_of_files_radar_front[idx],
                                                        self.list_of_files_radar_front_left[idx],
                                                        self.list_of_files_radar_front_right[idx],
                                                        self.list_of_files_radar_back_left[idx],
-                                                       self.list_of_files_radar_back_right[idx])
+                                                       self.list_of_files_radar_back_right[idx], json_reader, test)
         return num_points if points else cloud
 
     def get_dataset_size(self):

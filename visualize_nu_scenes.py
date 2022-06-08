@@ -1,21 +1,23 @@
-import copy
 import math
 import open3d as o3d
 import data_nu_scenes
 import json_reader
 import numpy as np
+import pcd_render_utils
 
 
-def visualize_with_viewpoint(cloud):
-    vis.add_geometry(cloud)
-    vis.poll_events()
-    vis.update_renderer()
+def visualize_with_viewpoint(clouds):
+    vis = o3d.visualization.Visualizer()
+    vis.create_window(width=500, height=500)
+    for cloud in clouds:
+        vis.add_geometry(cloud)
+        vis.poll_events()
+        vis.update_renderer()
     vis.run()
     vis.clear_geometries()
+    vis.destroy_window()
 
 
-vis = o3d.visualization.Visualizer()
-vis.create_window(width=500, height=500)
 data_nu_scenes = data_nu_scenes.DataNuScenes()
 json = json_reader.JsonReader()
 max_lidar_points = 0
@@ -25,34 +27,30 @@ a = [[math.pi, math.pi, math.pi / 2], [0, 0, -math.pi / 2]]
 
 initial_translation = 0
 list_of_lidar = data_nu_scenes.list_of_files_lidar
-start, end = json.get_scene(2, list_of_lidar)
+start, end = json.get_scene(5, list_of_lidar)
 print(f"Start {start} and end {end}")
 print(f"DatasetSize: {data_nu_scenes.get_dataset_size()}")
 full_cloud = None
-for f in range(50, 51):
+radar_cloud = None
+testcloud = None
+for f in range(1, 2):
     o3d_pcd_lidar = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(data_nu_scenes.get_lidar(f, max_lidar_points)))
-    translation, rotation = json.get_translation(data_nu_scenes.get_lidar_path(f))
-    if initial_translation == 0:
-        initial_translation = translation
-    # translation = np.subtract(translation, initial_translation)
-    # Apply translation provided by Nu_scenes
-    translate = copy.deepcopy(o3d_pcd_lidar)
-    translate.translate((translation[0], translation[1], translation[2]))
-    # Apply rotation provided by Nu_scenes
-    rotate = copy.deepcopy(translate)
-    R = o3d.geometry.get_rotation_matrix_from_quaternion(rotation)
-    rotate.rotate(R)
-    # Apply rotation to fix offset
-    deg_90 = o3d.geometry.get_rotation_matrix_from_xyz((a[1][0], a[1][1], a[1][2]))
-    rotate.rotate(deg_90)
+    o3d_pcd_radar = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(data_nu_scenes.get_radar(f, json, max_radar_points, False)))
+    test = o3d.geometry.PointCloud(
+        o3d.utility.Vector3dVector(data_nu_scenes.get_radar(f, json, max_radar_points, True)))
+    pcd_lidar_transform = pcd_render_utils.transform_cloud(f, json, data_nu_scenes, o3d_pcd_lidar).paint_uniform_color([0, 1, 0])
+    pcd_radar_transform = pcd_render_utils.transform_cloud(f, json, data_nu_scenes, o3d_pcd_radar).paint_uniform_color([1, 0, 0])
+    pcd_radar_test = pcd_render_utils.transform_cloud(f, json, data_nu_scenes, test).paint_uniform_color([0, 0, 1])
 
-    if full_cloud is None:
-        full_cloud = rotate
+    if (full_cloud or radar_cloud) is None:
+        full_cloud = pcd_lidar_transform
+        radar_cloud = pcd_radar_transform
+        testcloud = pcd_radar_test
     else:
-        full_cloud = full_cloud + rotate
-    # Radar
-    o3d_pcd_radar_comb = o3d.geometry.PointCloud(data_nu_scenes.get_radar(f, max_radar_points)).paint_uniform_color(
-        [0, 0, 0])
-visualize_with_viewpoint(full_cloud)
-o3d.io.write_point_cloud("files/part.ply", full_cloud)
+        full_cloud = full_cloud + pcd_lidar_transform
+        radar_cloud = radar_cloud + pcd_radar_transform
+        testcloud = testcloud + pcd_radar_test
+visualize_with_viewpoint([full_cloud, radar_cloud, testcloud])
+visualize_with_viewpoint([full_cloud, testcloud])
+#o3d.io.write_point_cloud("files/part.ply", full_cloud)
 gigahuts = 100
