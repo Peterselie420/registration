@@ -46,10 +46,16 @@ class JsonReader:
         file_name = file_location.split(
             "/home/carpc/PycharmProjects/Lidar_to_Radar/dataset/nu_scenes/v1.0-trainval01_blobs/"
         )[1]
+        print(file_name)
         for sample_data in self.sample_data_read:
             if sample_data['filename'] == file_name:
+                for sample in self.sample_read:
+                    if sample['token'] == sample_data['sample_token']:
+                        print(sample['scene_token'])
+                        print(sample_data['sample_token'])
                 for calib_sensor in self.calib_sensors:
                     if calib_sensor['token'] == sample_data['calibrated_sensor_token']:
+                        print(calib_sensor['token'])
                         return calib_sensor['translation'], calib_sensor['rotation']
         print("Big fuckie wuckie")
         return 0, 0

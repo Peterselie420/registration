@@ -23,8 +23,8 @@ class DataNuScenes:
         directory_radar_front = directory_nu_scenes + '/v1.0-trainval01_blobs/samples/RADAR_FRONT'
 
         self.list_of_files_lidar, self.list_of_files_radar_back_left, self.list_of_files_radar_back_right, \
-            self.list_of_files_radar_front_left, self.list_of_files_radar_front_right, \
-            self.list_of_files_radar_front = [], [], [], [], [], []
+        self.list_of_files_radar_front_left, self.list_of_files_radar_front_right, \
+        self.list_of_files_radar_front = [], [], [], [], [], []
         for i in range(1, len(os.listdir(directory_nu_scenes)) + 1):
             self.list_of_files_lidar += utils.get_list_of_files(directory_lidar.replace("01", f'0{i.__str__()}'))
             self.list_of_files_radar_back_left += \
@@ -47,19 +47,28 @@ class DataNuScenes:
     def get_lidar_path(self, idx: int):
         return self.list_of_files_lidar[idx]
 
-    def get_lidar(self, idx: int, max_points: int = 0, square=False):
-        return data_utils.get_lidar_cloud(self.list_of_files_lidar[idx], max_points, square)
+    def get_lidar(self, idx: int, json: JsonReader, max_points: int = 0, square=False):
+        return data_utils.get_lidar_cloud(self.list_of_files_lidar[idx], json, max_points, square)
 
     def get_num_of_radar_points(self, idx: int, json_reader: JsonReader):
         return self.get_radar(idx, json_reader=json_reader, points=True)
 
-    def get_radar(self, idx: int, json_reader: JsonReader, points: bool = False, test: bool = False):
-        cloud, num_points = data_utils.get_radar_cloud(self.list_of_files_radar_front[idx],
-                                                       self.list_of_files_radar_front_left[idx],
-                                                       self.list_of_files_radar_front_right[idx],
-                                                       self.list_of_files_radar_back_left[idx],
-                                                       self.list_of_files_radar_back_right[idx], json_reader, test)
-        return num_points if points else cloud
+    def get_radar(self, idx: int, json_reader: JsonReader, points: bool = False, test: bool = False, comb: bool = True):
+        if comb:
+            cloud, num_points = data_utils.get_radar_cloud(self.list_of_files_radar_front[idx],
+                                                           self.list_of_files_radar_front_left[idx],
+                                                           self.list_of_files_radar_front_right[idx],
+                                                           self.list_of_files_radar_back_left[idx],
+                                                           self.list_of_files_radar_back_right[idx], json_reader, test,
+                                                           combined=comb)
+            return num_points if points else cloud
+        else:
+            return data_utils.get_radar_cloud(self.list_of_files_radar_front[idx],
+                                              self.list_of_files_radar_front_left[idx],
+                                              self.list_of_files_radar_front_right[idx],
+                                              self.list_of_files_radar_back_left[idx],
+                                              self.list_of_files_radar_back_right[idx], json_reader, test,
+                                              combined=comb)
 
     def get_dataset_size(self):
         return self.dataset_size
