@@ -2,7 +2,6 @@ import math
 import open3d as o3d
 import data_nu_scenes
 import json_reader
-import numpy as np
 import pcd_render_utils
 
 
