@@ -7,15 +7,11 @@ from numpy import ndarray
 from nuscenes.nuscenes import NuScenes
 
 # Load the nuScenes dataset (mini-split, in this case).
+import path_globals
 import reglib
 from nu_scenes_render import NuScenesRenderer
 
 nusc = NuScenes(version='v1.0-mini', dataroot='data/sets/nuscenes', verbose=False)
-
-source = "/home/carpc/PycharmProjects/PythonRegistration/registration/files/part.ply"
-target = "/home/carpc/PycharmProjects/PythonRegistration/registration/files/full.ply"
-offset = "/home/carpc/PycharmProjects/PythonRegistration/registration/files/part_offset.ply"
-target_part = "/home/carpc/PycharmProjects/PythonRegistration/registration/files/target_part.ply"
 
 
 def subsample_cloud(percentage: int, cloud: o3d.geometry.PointCloud):
@@ -49,11 +45,11 @@ def apply_registration():
     # reglib.load_library(os.path.join(os.curdir, "cmake-build-debug"))
 
     # Load you data
-    source_points = reglib.load_data(offset)
-    target_points = reglib.load_data(target)
-    pcd_offset = o3d.io.read_point_cloud(offset).paint_uniform_color([1, 0, 0])
+    source_points = reglib.load_data(nu_scenes_globals.offset)
+    target_points = reglib.load_data(nu_scenes_globals.target)
+    pcd_offset = o3d.io.read_point_cloud(nu_scenes_globals.offset).paint_uniform_color([1, 0, 0])
     print(pcd_offset.compute_mean_and_covariance())
-    pcd_offset = o3d.io.read_point_cloud(target).paint_uniform_color([1, 0, 0])
+    pcd_offset = o3d.io.read_point_cloud(nu_scenes_globals.target).paint_uniform_color([1, 0, 0])
     print(pcd_offset.compute_mean_and_covariance())
     # Run the registration algorithm
     start = time.time()
@@ -83,7 +79,7 @@ if rerender:
 # Get transformation matrix to offset part cloud
 T_off, translation, rotation = generate_random_transformation_offset()
 # Offset part cloud and save to ply format
-part_cloud = o3d.io.read_point_cloud(source).paint_uniform_color([1, 0, 0])
+part_cloud = o3d.io.read_point_cloud(nu_scenes_globals.source).paint_uniform_color([1, 0, 0])
 part_cloud_copy = copy.deepcopy(part_cloud)
 part_cloud_transform = part_cloud_copy.translate(translation)
 cloud_center = part_cloud_transform.get_center()
@@ -91,10 +87,10 @@ part_cloud_transform = part_cloud_transform.rotate([[1.0, rotation[0], rotation[
                                                     [rotation[2], 1.0, rotation[3]],
                                                     [rotation[4], rotation[5], 1.0]], center=cloud_center)
 part_cloud_transform = part_cloud_transform.paint_uniform_color([0, 0, 0])
-o3d.io.write_point_cloud(offset, part_cloud_transform, write_ascii=True)
+o3d.io.write_point_cloud(nu_scenes_globals.offset, part_cloud_transform, write_ascii=True)
 # Show visualization for offset and original cloud with full cloud backdrop, so 3 total
-full_cloud = o3d.io.read_point_cloud(target)
-part_lidar_cloud = o3d.io.read_point_cloud(target_part).paint_uniform_color([0, 1, 1])
+full_cloud = o3d.io.read_point_cloud(nu_scenes_globals.target)
+part_lidar_cloud = o3d.io.read_point_cloud(nu_scenes_globals.target_part).paint_uniform_color([0, 1, 1])
 nu_scenes_renderer.visualize_pcd([part_cloud, part_cloud_transform, full_cloud, part_lidar_cloud])
 h = 0
 error = 999
@@ -108,7 +104,7 @@ while error > 0.1:
                 [T_ndt[2, 0], T_ndt[2, 1], 1]]
     print(translation)
     translation[2] = 0
-    part_cloud_transform = o3d.io.read_point_cloud(offset)
+    part_cloud_transform = o3d.io.read_point_cloud(nu_scenes_globals.offset)
     ndt_cloud = part_cloud_transform_copy.translate(translation).paint_uniform_color([0, 1, 0])
     cloud_center = ndt_cloud.get_center()
     ndt_cloud = ndt_cloud.rotate(rotation, center=cloud_center).paint_uniform_color([0, 1, 0])

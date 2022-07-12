@@ -1,6 +1,6 @@
 import numpy as np
 from nuscenes import NuScenes
-import nu_scenes_globals
+import path_globals
 from linear_regression import LinearRegression
 from nu_scenes_helper import NuScenesHelper
 import open3d as o3d
@@ -44,12 +44,22 @@ class NuScenesRenderer:
         current_sample_token = scene['first_sample_token']
         pcd_lidar_scene = np.empty((1, 4))
         pcd_radar_scene = np.empty((1, 18))
+        mean_list = []
         while current_sample_token != "":
             sample = self.nusc.get("sample", current_sample_token)
-            pcd_lidar_scene = np.concatenate((pcd_lidar_scene, self.nu_scenes_helper.get_lidar_points(sample)), 0)
+            translation = self.nu_scenes_helper.get_vehicle_position(sample, "LIDAR_TOP")
+            mean_list.append([translation[0], translation[1]])
+            current_sample_token = sample['next']
+        current_sample_token = scene['first_sample_token']
+        pcd_lidar_scene = np.empty((1, 4))
+        pcd_radar_scene = np.empty((1, 18))
+        while current_sample_token != "":
+            sample = self.nusc.get("sample", current_sample_token)
+            pcd_lidar_scene = np.concatenate((pcd_lidar_scene, self.nu_scenes_helper.get_lidar_points(sample, mean_list=mean_list)), 0)
             pcd_radar_scene = np.concatenate((pcd_radar_scene, self.nu_scenes_helper.get_radar_points(sample)), 0)
             current_sample_token = sample['next']
-        pcd_lidar_scene = self.llr.process_cloud(pcd_lidar_scene[1:])
+        # pcd_lidar_scene = self.llr.zero_z_and_remove_dups(pcd_lidar_scene)
+        pcd_lidar_scene = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(pcd_lidar_scene[:, [0, 1, 2]]))
         # Cut clouds to shape x-y-z and remove buffer point
         pcd_radar_scene = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(pcd_radar_scene[1:, [0, 1, 2]]))
         if visualize:
@@ -59,14 +69,16 @@ class NuScenesRenderer:
     def save_clouds(self, scene: int):
         pcd_lidar, pcd_radar = self.render_scene(scene, visualize=False)
         # pcd_lidar = subsample_cloud(15, pcd_lidar)
-        o3d.io.write_point_cloud(nu_scenes_globals.target, pcd_lidar, write_ascii=True)
+        o3d.io.write_point_cloud(nu_scenes_globals.target, pcd_lidar, write_ascii=False)
         sample = (self.get_random_scene_sample(scene))
 
-        pcd_lidar_sample = self.nu_scenes_helper.get_lidar_points(sample)[:, [0, 1, 2, 3]]
-        pcd_lidar_sample = self.llr.process_cloud(pcd_lidar_sample)
+        pcd_lidar_sample = self.nu_scenes_helper.get_lidar_points(sample, filter=False)[:, [0, 1, 2, 3]]
+        # pcd_lidar_sample = self.llr.zero_z_and_remove_dups(pcd_lidar_sample)
+        pcd_lidar_sample = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(pcd_lidar_sample[:, [0, 1, 2]]))
         o3d.io.write_point_cloud(nu_scenes_globals.target_part, pcd_lidar_sample, write_ascii=True)
 
         pcd_radar_sample = self.nu_scenes_helper.get_lidar_points(sample)[:, [0, 1, 2, 3]]
-        pcd_radar_sample = self.llr.process_cloud(pcd_radar_sample)
+        # pcd_radar_sample = self.llr.zero_z_and_remove_dups(pcd_radar_sample)
+        pcd_radar_sample = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(pcd_radar_sample[:, [0, 1, 2]]))
         o3d.io.write_point_cloud(nu_scenes_globals.source, pcd_radar_sample, write_ascii=True)
         print(len(pcd_radar_sample.points))

@@ -14,6 +14,7 @@ class LinearRegression:
         self.middle = math.ceil(self.buffer_size / 2)
 
     def perform_regression(self, buffer, index: int):
+        return []
         x, y = [], []
         for point in buffer:
             x.append(point[0])
