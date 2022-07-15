@@ -34,7 +34,8 @@ class RenderMachine:
         :return: Random sample from within the scene
         """
         scene = self.nusc.scene[scene]
-        random = np.random.randint(0, scene['nbr_samples'])
+        random = np.random.randint(0, scene['nbr_samples']), "Manual 'random' sample outside of scene range"
+        assert self.random_sample < scene['nbr_samples']
         if self.random_sample is not None:
             random = self.random_sample
         print(f"Randomly chosen sample: {random}")

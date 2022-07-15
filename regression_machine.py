@@ -4,18 +4,40 @@ from nuscenes import NuScenes
 from open3d.cuda.pybind.geometry import PointCloud
 import open3d as o3d
 from tqdm import tqdm
-
 import path_globals
+from sklearn.datasets import make_classification
+from sklearn.cluster import DBSCAN
+from matplotlib import pyplot
 
 
-class FilterMachine:
+class RegressionMachine:
 
     def __init__(self, nusc: NuScenes):
         self.nusc = nusc
-        self.height = 0.8
-        self.height_upper = 1.5
-        self.radius = 8
-        self.small_radius = 5
+
+    @staticmethod
+    def seek_linearity(cloud: PointCloud):
+        noise_reduction = []
+        points = cloud.points
+        count = 0
+        with tqdm(total=(len(points))) as pbar:
+            for i in range(0, len(points)):
+                if i % 100 == 0:
+                    print(len(noise_reduction))
+                pbar.update(1)
+                point = [points[i][0], points[i][1]]
+                for j in range(0, len(points)):
+                    if j == i:
+                        continue
+                    point_ = [points[j][0], points[j][1]]
+                    if math.dist(point, point_) < 0.04:
+                        count = count + 1
+                    if count >= 15:
+                        noise_reduction.append(points[i])
+                        count = 0
+                        break
+        cloud = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(noise_reduction))
+        o3d.io.write_point_cloud(path_globals.lidar_scene_filter_ZC_N, cloud, write_ascii=False)
 
     def get_vehicle_position(self, sample, channel: str = "LIDAR_TOP"):
         pointsensor_token = sample['data'][channel]

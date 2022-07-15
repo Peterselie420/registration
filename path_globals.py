@@ -7,5 +7,7 @@ radar_part = "/home/carpc/PycharmProjects/PythonRegistration/registration/clouds
 lidar_scene_filter = "/home/carpc/PycharmProjects/PythonRegistration/registration/clouds/lidar_scene_filter.pcd"
 lidar_part_filter = "/home/carpc/PycharmProjects/PythonRegistration/registration/clouds/lidar_part_filter.pcd"
 
-offset = "/home/carpc/PycharmProjects/PythonRegistration/registration/files/part_offset2d.pcd"
-target_part = "/home/carpc/PycharmProjects/PythonRegistration/registration/files/target_part.ply"
+lidar_scene_filter_ZC = "/home/carpc/PycharmProjects/PythonRegistration/registration/clouds/lidar_scene_filter_ZC.pcd"
+radar_part_ZC = "/home/carpc/PycharmProjects/PythonRegistration/registration/clouds/radar_part_ZC.pcd"
+
+lidar_scene_filter_ZC_N = "/home/carpc/PycharmProjects/PythonRegistration/registration/clouds/lidar_scene_filter_ZC_N.pcd"
