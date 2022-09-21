@@ -51,15 +51,11 @@ class RenderMachine:
         return self.nusc.get("sample", sample)
 
     @staticmethod
-    def render_concat_radar(concat_level: int, clear_concat_folder: bool = True):
-        if clear_concat_folder:
-            concat_folder = utils.get_list_of_files(path_globals.scene_parts_concat)
-            for c in concat_folder:
-                os.remove(c)
-        clouds = utils.get_list_of_files(path_globals.scene_parts_filter_ZC)
+    def render_concat_radar(concat_level: int, clear_concat_folder: bool = False):
+        clouds = utils.get_list_of_files(utils.split_cloud(path_globals.scene, path_globals.scene_parts_filter_ZC))
         for cloud_path in clouds:
             if cloud_path.__contains__("radar"):
-                sample_ = cloud_path.split(path_globals.scene_parts_filter_ZC + "/radar_")
+                sample_ = cloud_path.split(utils.split_cloud(path_globals.scene, path_globals.scene_parts_filter_ZC) + "/radar_")
                 sample_ = int(sample_[1].split(".pcd")[0])
                 print(f"Sample currently processing: {sample_}")
                 if sample_ < concat_level:
@@ -70,18 +66,18 @@ class RenderMachine:
                     concat_level_ = concat_level_ - 1
                     for cloud_path_ in clouds:
                         if cloud_path_.__contains__("radar"):
-                            sample__ = cloud_path_.split(path_globals.scene_parts_filter_ZC + "/radar_")
+                            sample__ = cloud_path_.split(utils.split_cloud(path_globals.scene, path_globals.scene_parts_filter_ZC) + "/radar_")
                             sample__ = int(sample__[1].split(".pcd")[0])
                             if sample__ == sample_ - concat_level_ - 1:
                                 print(f"Concatenating sample {sample__}")
                                 pcd_radar_scene = np.concatenate(
                                     (pcd_radar_scene, o3d.io.read_point_cloud(cloud_path_).points), 0)
-                o3d.io.write_point_cloud(path_globals.scene_parts_concat + "radar_" + concat_level.__str__() +
+                o3d.io.write_point_cloud(utils.split_cloud(path_globals.scene, path_globals.scene_parts_concat) + "radar_" + concat_level.__str__() +
                                          "_" + sample_.__str__() + ".pcd",
                                          o3d.geometry.PointCloud(o3d.utility.Vector3dVector(pcd_radar_scene)),
                                          write_ascii=False)
 
-    def render_scene(self, scene: int, render_parts: bool = False, visualize: bool = False) \
+    def render_scene(self, scene: int, render_parts: bool = False, visualize: bool = False, skip_part: int = None) \
             -> [PointCloud, PointCloud]:
         """
         :param render_parts: Whether to render each part in the scene
@@ -103,24 +99,24 @@ class RenderMachine:
                 if render_parts:
                     lidar_points = self.point_machine.get_lidar_points(sample)
                     lidar_cloud = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(lidar_points[1:, [0, 1, 2]]))
-                    o3d.io.write_point_cloud(path_globals.scene_parts_raw + "lidar_" + sample_index.__str__() + ".pcd",
+                    o3d.io.write_point_cloud(utils.split_cloud(path_globals.scene, path_globals.scene_parts_raw) + "lidar_" + sample_index.__str__() + ".pcd",
                                              lidar_cloud, write_ascii=False)
                     radar_points = self.point_machine.get_radar_points(sample)
                     radar_cloud = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(radar_points[1:, [0, 1, 2]]))
-                    o3d.io.write_point_cloud(path_globals.scene_parts_raw + "radar_" + sample_index.__str__() + ".pcd",
+                    o3d.io.write_point_cloud(utils.split_cloud(path_globals.scene, path_globals.scene_parts_raw) + "radar_" + sample_index.__str__() + ".pcd",
                                              radar_cloud, write_ascii=False)
                     sample_index = sample_index + 1
-
-                pcd_lidar_scene = np.concatenate((pcd_lidar_scene, self.point_machine.get_lidar_points(sample)), 0)
-                pcd_radar_scene = np.concatenate((pcd_radar_scene, self.point_machine.get_radar_points(sample)), 0)
+                if sample_index != skip_part:
+                    pcd_lidar_scene = np.concatenate((pcd_lidar_scene, self.point_machine.get_lidar_points(sample)), 0)
+                    pcd_radar_scene = np.concatenate((pcd_radar_scene, self.point_machine.get_radar_points(sample)), 0)
                 current_sample_token = sample['next']
             print(f"Scene {scene} processed!")
             scene = scene + 1
         # Cut clouds to shape x-y-z and remove buffer point
         pcd_lidar_scene = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(pcd_lidar_scene[1:, [0, 1, 2]]))
-        o3d.io.write_point_cloud(path_globals.lidar_scene, pcd_lidar_scene, write_ascii=False)
+        o3d.io.write_point_cloud(utils.split_cloud(path_globals.scene, path_globals.lidar_scene), pcd_lidar_scene, write_ascii=False)
         pcd_radar_scene = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(pcd_radar_scene[1:, [0, 1, 2]]))
-        o3d.io.write_point_cloud(path_globals.radar_scene, pcd_radar_scene, write_ascii=False)
+        o3d.io.write_point_cloud(utils.split_cloud(path_globals.scene, path_globals.radar_scene), pcd_radar_scene, write_ascii=False)
         if visualize:
             self.visualize_pcd([pcd_lidar_scene, pcd_radar_scene.paint_uniform_color([0, 0, 0])])
         return pcd_lidar_scene, pcd_radar_scene
@@ -133,8 +129,8 @@ class RenderMachine:
         sample = self.get_random_scene_sample(scene)
         pcd_lidar_part = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(
             self.point_machine.get_lidar_points(sample)[:, [0, 1, 2]]))
-        o3d.io.write_point_cloud(path_globals.lidar_part, pcd_lidar_part, write_ascii=False)
+        o3d.io.write_point_cloud(utils.split_cloud(path_globals.scene, path_globals.lidar_part), pcd_lidar_part, write_ascii=False)
         pcd_radar_part = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(
             self.point_machine.get_radar_points(sample)[:, [0, 1, 2]]))
-        o3d.io.write_point_cloud(path_globals.radar_part, pcd_radar_part, write_ascii=False)
+        o3d.io.write_point_cloud(utils.split_cloud(path_globals.scene, path_globals.radar_part), pcd_radar_part, write_ascii=False)
         return pcd_lidar_part, pcd_radar_part, sample

@@ -6,6 +6,7 @@ import open3d as o3d
 from scipy.stats import stats
 from tqdm import tqdm
 import path_globals
+import utils
 
 
 class RegressionMachine:
@@ -39,7 +40,7 @@ class RegressionMachine:
                         count = 0
                         break
         cloud = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(noise_reduction))
-        o3d.io.write_point_cloud(path_globals.radar_part_ZC_N, cloud, write_ascii=False)
+        o3d.io.write_point_cloud(utils.split_cloud(path_globals.scene, path_globals.radar_part_ZC_N), cloud, write_ascii=False)
 
     def perform_regression(self, buffer, index: int):
         x, y = [], []
@@ -86,5 +87,5 @@ class RegressionMachine:
         points = np.delete(points, unique_remove_indexes, axis=0)
         print(len(points))
         cloud = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(points[:, [0, 1, 2]]))
-        o3d.io.write_point_cloud(path_globals.lidar_scene_filter_ZC_LR, cloud, write_ascii=False)
+        o3d.io.write_point_cloud(utils.split_cloud(path_globals.scene, path_globals.lidar_scene_filter_ZC_LR), cloud, write_ascii=False)
         return cloud

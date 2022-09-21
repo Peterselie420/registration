@@ -13,7 +13,7 @@ class FilterMachine:
     def __init__(self, nusc: NuScenes):
         self.nusc = nusc
         self.height = 0.8
-        self.height_upper = 1.5
+        self.height_upper = 2
         self.radius = 8
         self.small_radius = 5
 
@@ -36,31 +36,31 @@ class FilterMachine:
         return cloud
 
     def filter_center_zero_all(self, scene: int, center_offset: [int, int, int]):
-        clouds = utils.get_list_of_files(path_globals.scene_parts_raw)
+        clouds = utils.get_list_of_files(utils.split_cloud(path_globals.scene, path_globals.scene_parts_raw))
         for cloud_path in clouds:
             if cloud_path.__contains__("lidar"):
-                sample_ = cloud_path.split(path_globals.scene_parts_raw + "/lidar_")
+                sample_ = cloud_path.split(utils.split_cloud(path_globals.scene, path_globals.scene_parts_raw) + "/lidar_")
                 sample_ = int(sample_[1].split(".pcd")[0])
                 sample = self.get_sample(scene, sample_)
                 vehicle_position = self.get_vehicle_position(sample)
                 cloud = o3d.io.read_point_cloud(cloud_path)
                 cloud = self.apply_filter(cloud, [vehicle_position])
                 cloud = self.zero_and_center_cloud(cloud,
-                                                   path_globals.scene_parts_filter_ZC + "lidar_" + sample_.__str__() + ".pcd",
+                                                   utils.split_cloud(path_globals.scene, path_globals.scene_parts_filter_ZC) + "lidar_" + sample_.__str__() + ".pcd",
                                                    center_offset)
             if cloud_path.__contains__("radar"):
-                sample_ = cloud_path.split(path_globals.scene_parts_raw + "/radar_")
+                sample_ = cloud_path.split(utils.split_cloud(path_globals.scene, path_globals.scene_parts_raw) + "/radar_")
                 sample_ = int(sample_[1].split(".pcd")[0])
                 cloud = o3d.io.read_point_cloud(cloud_path)
                 cloud = self.zero_and_center_cloud(cloud,
-                                                   path_globals.scene_parts_filter_ZC + "radar_" + sample_.__str__() + ".pcd",
+                                                   utils.split_cloud(path_globals.scene, path_globals.scene_parts_filter_ZC) + "radar_" + sample_.__str__() + ".pcd",
                                                    center_offset)
 
     def filter_cloud(self, pcd_lidar_part: PointCloud, sample: dict):
         print("Filter cloud\n")
         vehicle_position = self.get_vehicle_position(sample)
         cloud = self.apply_filter(pcd_lidar_part, [vehicle_position])
-        o3d.io.write_point_cloud(path_globals.lidar_part_filter, cloud, write_ascii=False)
+        o3d.io.write_point_cloud(utils.split_cloud(path_globals.scene, path_globals.lidar_part_filter), cloud, write_ascii=False)
         return cloud
 
     def filter_scene(self, pcd_lidar_scene, scene: int):
@@ -73,7 +73,7 @@ class FilterMachine:
             vehicle_positions.append(self.get_vehicle_position(sample))
             current_sample_token = sample['next']
         cloud = self.apply_filter(pcd_lidar_scene, vehicle_positions)
-        o3d.io.write_point_cloud(path_globals.lidar_scene_filter, cloud, write_ascii=False)
+        o3d.io.write_point_cloud(utils.split_cloud(path_globals.scene, path_globals.lidar_scene_filter), cloud, write_ascii=False)
         return cloud
 
     def apply_filter(self, cloud: PointCloud, vehicle_positions):

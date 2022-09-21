@@ -2,6 +2,7 @@ lidar_scene = "/home/carpc/PycharmProjects/PythonRegistration/registration/cloud
 lidar_scene_ZC = "/home/carpc/PycharmProjects/PythonRegistration/registration/clouds/lidar_scene_ZC.pcd"
 radar_scene = "/home/carpc/PycharmProjects/PythonRegistration/registration/clouds/radar_scene.pcd"
 radar_scene_ZC = "/home/carpc/PycharmProjects/PythonRegistration/registration/clouds/radar_scene_ZC.pcd"
+radar_scene_ZC_gap = "/home/carpc/PycharmProjects/PythonRegistration/registration/clouds/radar_scene_ZC_gap.pcd"
 
 scene_parts_raw = "/home/carpc/PycharmProjects/PythonRegistration/registration/clouds/scene_parts/raw/"
 scene_parts_filter_ZC = "/home/carpc/PycharmProjects/PythonRegistration/registration/clouds/scene_parts/filter_ZC/"
@@ -20,3 +21,5 @@ lidar_scene_filter_ZC_N = "/home/carpc/PycharmProjects/PythonRegistration/regist
 radar_part_ZC_N = "/home/carpc/PycharmProjects/PythonRegistration/registration/clouds/radar_part_ZC_N.pcd"
 
 lidar_scene_filter_ZC_LR = "/home/carpc/PycharmProjects/PythonRegistration/registration/clouds/lidar_scene_filter_ZC_LR.pcd"
+
+scene = 0
