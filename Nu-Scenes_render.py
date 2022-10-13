@@ -17,8 +17,8 @@ def huts():
     # nusc = NuScenes(version='v1.0-trainval', dataroot='/home/carpc/PycharmProjects/Lidar_to_Radar/dataset/nu_scenes', verbose=False)
     scene = 0  # Select scene number
     random_sample = 20
-    max_concat = 10
-    visualize = False
+    max_concat = 20
+    visualize = True
     nuke = True
     clear_all = True
     skip_part = None
@@ -91,9 +91,6 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-folder = "/home/carpc/Documents/PCL_NDT/build/"
-results_folder = "/home/carpc/Documents/PCL_NDT/test_results/"
-
 
 def plot_shit():
     files = utils.get_list_of_files(results_folder)
@@ -115,10 +112,52 @@ def plot_shit():
 def plot_baseline(rotation: bool, tagg: str = None):
     tag = "translation"
     if rotation:
-        tag = "rotation"
+        tag = "_rotation"
     if tagg is not None:
         tag = tagg
-    files = utils.get_list_of_files(folder)
+    files = utils.get_list_of_files(results_folder)
+    fig, axes = plt.subplots(2, 3, figsize=(6, 10))
+    fig.suptitle('Lidar translation error')
+    ax_index = 0
+    for file in files:
+        if file.__contains__(tag):
+            print(file)
+            numbers = pd.read_csv(file).squeeze("columns")
+            print(numbers.describe())
+            x_off = numbers.iloc[:, 0].to_numpy()
+            y_off = numbers.iloc[:, 1].to_numpy()
+            r_off = numbers.iloc[:, 2].to_numpy()
+            offset = numbers.iloc[:, 3].to_numpy()
+            rotation_offset = numbers.iloc[:, 4].to_numpy()
+            absolute_off = []
+            for i in range(0, len(x_off)):
+                absolute_off.append(math.sqrt(pow(x_off[i], 2) + pow(y_off[i], 2)))
+            print(np.average(absolute_off))
+            data = pd.DataFrame([absolute_off, numbers.iloc[:, 3]])
+            print(ax_index / 3)
+            print(ax_index % 2)
+            if rotation:
+                axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].scatter(rotation_offset, absolute_off)
+                axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].title.set_text(file.split("results/")[1])
+                axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].set(xlabel="Absolute offset",
+                                                                             ylabel="Absolute error")
+            else:
+                axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].scatter(offset, absolute_off)
+                axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].title.set_text(file.split("results/")[1])
+                axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].set(xlabel="Absolute offset (m)",
+                                                                             ylabel="Absolute error (m)")
+            ax_index += 1
+    ax_index = 0
+    plt.show()
+
+
+def plot_concat(rotation: bool, tagg: str = None):
+    tag = "translation"
+    if rotation:
+        tag = "_rotation"
+    if tagg is not None:
+        tag = tagg
+    files = utils.get_list_of_files(results_folder)
     fig, axes = plt.subplots(2, 3, figsize=(6, 10))
     fig.suptitle('Lidar error')
     ax_index = 0
@@ -141,33 +180,146 @@ def plot_baseline(rotation: bool, tagg: str = None):
             print(ax_index % 2)
             if rotation:
                 axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].scatter(rotation_offset, r_off)
-                axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].title.set_text(file.split("build//")[1])
+                axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].title.set_text(file.split("results/")[1])
                 axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].set(xlabel="Absolute offset",
                                                                              ylabel="Absolute error")
             else:
                 axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].scatter(offset, absolute_off)
-                axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].title.set_text(file.split("build//")[1])
+                axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].title.set_text(file.split("results/")[1])
                 axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].set(xlabel="Absolute offset",
                                                                              ylabel="Absolute error")
             ax_index += 1
     ax_index = 0
     plt.show()
 
-
-def print_mean_concat():
+def plot_concat_optim(tag: str):
     files = utils.get_list_of_files(folder)
+    fig, axes = plt.subplots(2, 3, figsize=(6, 10))
+    fig.suptitle('Radaer error')
+    ax_index = 0
     for file in files:
-        if file.__contains__("translation"):
+        if file.__contains__(tag):
+            print(file)
             numbers = pd.read_csv(file).squeeze("columns")
-            # print(numbers.describe())
+            print(numbers.describe())
             x_off = numbers.iloc[:, 0].to_numpy()
             y_off = numbers.iloc[:, 1].to_numpy()
+            r_off = numbers.iloc[:, 2].to_numpy()
+            x_off_ = numbers.iloc[:, 3].to_numpy()
+            y_off_ = numbers.iloc[:, 4].to_numpy()
+            r_off_ = numbers.iloc[:, 5].to_numpy()
+            offset = numbers.iloc[:, 6].to_numpy()
+            rotation_offset = numbers.iloc[:, 7].to_numpy()
             absolute_off = []
             for i in range(0, len(x_off)):
                 absolute_off.append(math.sqrt(pow(x_off[i], 2) + pow(y_off[i], 2)))
-            print(file)
-            print(np.average(absolute_off))
+            absolute_off_ = []
+            for i in range(0, len(x_off)):
+                absolute_off_.append(math.sqrt(pow(x_off_[i], 2) + pow(y_off_[i], 2)))
+            print(np.average(absolute_off_))
+            print(ax_index / 3)
+            print(ax_index % 2)
+            axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].scatter(offset, absolute_off)
+            axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].scatter(offset, absolute_off_)
+            axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].title.set_text(file.split("build/")[1])
+            axes[math.floor(ax_index / 3), math.floor(ax_index % 3)].set(xlabel="Absolute offset",
+                                                                         ylabel="Absolute error")
+            ax_index += 1
+    ax_index = 0
+    plt.show()
 
+
+def print_mean_concat_performance(tag: str, samples: int = 1):
+    files = utils.get_list_of_files(folder)
+    for file in files:
+        if file.__contains__(tag):
+            numbers = pd.read_csv(file).squeeze("columns")
+            for j in range(0, samples):
+                # print(numbers.describe())
+                x_off = numbers.iloc[:, 0 + 5 * j].to_numpy()
+                y_off = numbers.iloc[:, 1 + 5 * j].to_numpy()
+                r_off = numbers.iloc[:, 2 + 5 * j].to_numpy()
+                iterations = numbers.iloc[:, 3 + 5 * j].to_numpy()
+                elapsed_time = numbers.iloc[:, 4 + 5 * j].to_numpy()
+                absolute_off = []
+                for i in range(0, len(x_off)):
+                    absolute_off.append(math.sqrt(pow(x_off[i], 2) + pow(y_off[i], 2)))
+                print(file)
+                print(np.average(absolute_off))
+                print(np.average(r_off))
+                print(np.average(iterations))
+                print(np.average(elapsed_time))
+
+def print_mean_concat(tag: str, samples: int = 1):
+    files = utils.get_list_of_files(folder)
+    for file in files:
+        if file.__contains__(tag):
+            numbers = pd.read_csv(file).squeeze("columns")
+            for j in range(0, samples):
+                # print(numbers.describe())
+                x_off = numbers.iloc[:, 0 + 3 * j].to_numpy()
+                y_off = numbers.iloc[:, 1 + 3 * j].to_numpy()
+                r_off = numbers.iloc[:, 2 + 3 * j].to_numpy()
+                absolute_off = []
+                for i in range(0, len(x_off)):
+                    absolute_off.append(math.sqrt(pow(x_off[i], 2) + pow(y_off[i], 2)))
+                print(file)
+                print(np.average(absolute_off))
+                print(np.average(r_off))
+
+
+def plot_random_offset(tag: str, samples: int = 1):
+    files = utils.get_list_of_files(folder)
+    for file in files:
+        if file.__contains__(tag):
+            numbers = pd.read_csv(file).squeeze("columns")
+            for j in range(0, samples):
+                # print(numbers.describe())
+                x_off = numbers.iloc[:, 0 + 3 * j].to_numpy()
+                y_off = numbers.iloc[:, 1 + 3 * j].to_numpy()
+                r_off = numbers.iloc[:, 2 + 3 * j].to_numpy()
+                offset = numbers.iloc[:, 7]
+                print(abs(numbers.iloc[:, 7]).describe())
+                sns.violinplot(data=offset)
+                plt.ylim([-4, 4])
+                plt.ylabel("Offset (deg)")
+                plt.title("Randomly generated rotation offset from -4-4")
+                plt.show()
+
+
+def plot_single(tag: str):
+    files = utils.get_list_of_files(results_folder)
+    for file in files:
+        if file.__contains__(tag):
+            print(file)
+            numbers = pd.read_csv(file).squeeze("columns")
+            print(numbers.describe())
+            x_off = numbers.iloc[:, 0].to_numpy()
+            y_off = numbers.iloc[:, 1].to_numpy()
+            r_off = numbers.iloc[:, 2].to_numpy()
+            offset = numbers.iloc[:, 3].to_numpy()
+            rotation_offset = numbers.iloc[:, 4].to_numpy()
+            absolute_off = []
+            for i in range(0, len(x_off)):
+                absolute_off.append(math.sqrt(pow(x_off[i], 2) + pow(y_off[i], 2)))
+            print(np.average(absolute_off))
+            data = pd.DataFrame([absolute_off, numbers.iloc[:, 3]])
+            plt.scatter(offset, absolute_off)
+            plt.title("Lidar translation error")
+            plt.ylabel("Absolute error (m)")
+            plt.xlabel("Absolute offset (m)")
+            ax_index = 0
+            plt.show()
+
+
+folder = "/home/carpc/Documents/PCL_NDT/build/"
+results_folder = "/home/carpc/Documents/PCL_NDT/test_results/lidar_baseline/"
 
 if __name__ == '__main__':
-    plot_baseline(rotation=False)
+    tag = "_"
+    #plot_random_offset(tag, samples=2)
+    #plot_random_offset(tag, samples=2)
+    #plot_single(tag)
+    #plot_concat(rotation=False)
+    plot_baseline(rotation=False, tagg=tag)
+    #plot_concat_optim(tag)
